@@ -1,8 +1,10 @@
 package database
 
 import (
+	"context"
 	"os"
 
+	"github.com/Toolnado/authorization-module/internal/model"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
@@ -20,4 +22,8 @@ func NewStore() *PostgresStore {
 	return &PostgresStore{
 		db: db,
 	}
+}
+
+func (p *PostgresStore) CreateUser(ctx context.Context, user *model.User) (string, error) {
+	return "", nil
 }
