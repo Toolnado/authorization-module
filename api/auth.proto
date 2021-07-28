@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="../api";
+
+service Authorization{
+    rpc CreateUser (User) returns (UserId);
+}
+
+message User{
+    string name=1;
+    string username=2;
+    string password=3;
+}
+
+message UserId{
+    uint32 id=1;
+}
