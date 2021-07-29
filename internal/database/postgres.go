@@ -2,11 +2,12 @@ package database
 
 import (
 	"context"
+	"crypto/sha1"
+	"fmt"
 	"os"
 
 	"github.com/Toolnado/authorization-module/internal/model"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,25 @@ func NewStore() *PostgresStore {
 	}
 }
 
-func (p *PostgresStore) CreateUser(ctx context.Context, user *model.User) (string, error) {
-	return "", nil
+func (p *PostgresStore) CreateUser(ctx context.Context, user *model.User) (int, error) {
+	hashPassword, err := hashPassword(user.Password)
+	id := 0
+
+	if err != nil {
+		logrus.Printf("Error hashing: %s", err.Error())
+	}
+
+	query := fmt.Sprintln("INSERT INTO users (name, username, hashpassword) VALUES ($1, $2, $3) RETURNING id;")
+
+	p.db.QueryRow(query, user.Name, user.Username, hashPassword).Scan(&id)
+
+	return id, nil
+}
+
+func hashPassword(password string) ([]byte, error) {
+	hasher := sha1.New()
+	hasher.Write([]byte(password))
+	hashPassword := hasher.Sum([]byte(password))
+
+	return hashPassword, nil
 }

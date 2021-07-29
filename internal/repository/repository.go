@@ -7,7 +7,7 @@ import (
 )
 
 type Authorization interface {
-	CreateUser(ctx context.Context, user *model.User) (string, error)
+	CreateUser(ctx context.Context, user *model.User) (int, error)
 }
 
 type Repository struct {
