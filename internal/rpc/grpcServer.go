@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"log"
 
 	"github.com/Toolnado/authorization-module/api"
+	"github.com/Toolnado/authorization-module/internal/model"
 	"github.com/Toolnado/authorization-module/internal/repository"
 )
 
@@ -19,5 +21,27 @@ func NewGrpcServer(repo *repository.Repository) *GrpcServer {
 }
 
 func (r *GrpcServer) CreateUser(ctx context.Context, User *api.User) (*api.UserId, error) {
-	return nil, nil
+	user := conversion(User)
+	userId, err := r.Repository.Authorization.CreateUser(ctx, user)
+
+	if err != nil {
+		log.Printf("Error create user: %s", err.Error())
+		return nil, err
+	}
+
+	id := &api.UserId{
+		Id: uint32(userId),
+	}
+
+	return id, nil
+}
+
+func conversion(user *api.User) *model.User {
+	newUser := &model.User{
+		Name:     user.Name,
+		Username: user.Username,
+		Password: user.Password,
+	}
+
+	return newUser
 }
