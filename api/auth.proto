@@ -3,7 +3,8 @@ syntax = "proto3";
 option go_package="../api";
 
 service Authorization{
-    rpc CreateUser (User) returns (UserId);
+    rpc SignUp (User) returns (UserId);
+    rpc SignIn (User) returns (Token);
 }
 
 message User{
@@ -14,4 +15,8 @@ message User{
 
 message UserId{
     uint32 id=1;
+}
+
+message Token{
+    string token=1;
 }

@@ -1,7 +1,6 @@
 package database
 
 import (
-	"context"
 	"crypto/sha1"
 	"fmt"
 	"os"
@@ -25,13 +24,9 @@ func NewStore() *PostgresStore {
 	}
 }
 
-func (p *PostgresStore) CreateUser(ctx context.Context, user *model.User) (int, error) {
-	hashPassword, err := hashPassword(user.Password)
+func (p *PostgresStore) CreateUser(user *model.User) (int, error) {
+	hashPassword := hashPassword(user.Password)
 	id := 0
-
-	if err != nil {
-		logrus.Printf("Error hashing: %s", err.Error())
-	}
 
 	query := fmt.Sprintln("INSERT INTO users (name, username, hashpassword) VALUES ($1, $2, $3) RETURNING id;")
 
@@ -40,10 +35,21 @@ func (p *PostgresStore) CreateUser(ctx context.Context, user *model.User) (int, 
 	return id, nil
 }
 
-func hashPassword(password string) ([]byte, error) {
+func (p *PostgresStore) GetUser(username, password string) (model.User, error) {
+	var user model.User
+	query := fmt.Sprintln("SELECT id FROM users WHERE username=$1 AND hashpassword=$2")
+
+	if err := p.db.Get(&user, query, username, hashPassword(password)); err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func hashPassword(password string) []byte {
 	hasher := sha1.New()
 	hasher.Write([]byte(password))
 	hashPassword := hasher.Sum([]byte(password))
 
-	return hashPassword, nil
+	return hashPassword
 }

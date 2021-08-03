@@ -1,13 +1,12 @@
 package repository
 
 import (
-	"context"
-
 	"github.com/Toolnado/authorization-module/internal/model"
 )
 
 type Authorization interface {
-	CreateUser(ctx context.Context, user *model.User) (int, error)
+	CreateUser(user *model.User) (int, error)
+	GetUser(username, password string) (model.User, error)
 }
 
 type Repository struct {

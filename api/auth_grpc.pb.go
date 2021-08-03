@@ -18,7 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthorizationClient interface {
-	CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserId, error)
+	SignUp(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserId, error)
+	SignIn(ctx context.Context, in *User, opts ...grpc.CallOption) (*Token, error)
 }
 
 type authorizationClient struct {
@@ -29,9 +30,18 @@ func NewAuthorizationClient(cc grpc.ClientConnInterface) AuthorizationClient {
 	return &authorizationClient{cc}
 }
 
-func (c *authorizationClient) CreateUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserId, error) {
+func (c *authorizationClient) SignUp(ctx context.Context, in *User, opts ...grpc.CallOption) (*UserId, error) {
 	out := new(UserId)
-	err := c.cc.Invoke(ctx, "/Authorization/CreateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/Authorization/SignUp", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authorizationClient) SignIn(ctx context.Context, in *User, opts ...grpc.CallOption) (*Token, error) {
+	out := new(Token)
+	err := c.cc.Invoke(ctx, "/Authorization/SignIn", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +52,8 @@ func (c *authorizationClient) CreateUser(ctx context.Context, in *User, opts ...
 // All implementations must embed UnimplementedAuthorizationServer
 // for forward compatibility
 type AuthorizationServer interface {
-	CreateUser(context.Context, *User) (*UserId, error)
+	SignUp(context.Context, *User) (*UserId, error)
+	SignIn(context.Context, *User) (*Token, error)
 	mustEmbedUnimplementedAuthorizationServer()
 }
 
@@ -50,8 +61,11 @@ type AuthorizationServer interface {
 type UnimplementedAuthorizationServer struct {
 }
 
-func (UnimplementedAuthorizationServer) CreateUser(context.Context, *User) (*UserId, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+func (UnimplementedAuthorizationServer) SignUp(context.Context, *User) (*UserId, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
+}
+func (UnimplementedAuthorizationServer) SignIn(context.Context, *User) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignIn not implemented")
 }
 func (UnimplementedAuthorizationServer) mustEmbedUnimplementedAuthorizationServer() {}
 
@@ -66,20 +80,38 @@ func RegisterAuthorizationServer(s grpc.ServiceRegistrar, srv AuthorizationServe
 	s.RegisterService(&Authorization_ServiceDesc, srv)
 }
 
-func _Authorization_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Authorization_SignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(User)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthorizationServer).CreateUser(ctx, in)
+		return srv.(AuthorizationServer).SignUp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Authorization/CreateUser",
+		FullMethod: "/Authorization/SignUp",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthorizationServer).CreateUser(ctx, req.(*User))
+		return srv.(AuthorizationServer).SignUp(ctx, req.(*User))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Authorization_SignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(User)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthorizationServer).SignIn(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Authorization/SignIn",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthorizationServer).SignIn(ctx, req.(*User))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -92,10 +124,14 @@ var Authorization_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthorizationServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateUser",
-			Handler:    _Authorization_CreateUser_Handler,
+			MethodName: "SignUp",
+			Handler:    _Authorization_SignUp_Handler,
+		},
+		{
+			MethodName: "SignIn",
+			Handler:    _Authorization_SignIn_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "auth.proto",
+	Metadata: "api/auth.proto",
 }
